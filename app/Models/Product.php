@@ -16,7 +16,7 @@ class Product extends Model
     'selling_price',
     'stock',
     'sku',
-    'unit', // ← tambahkan ini
+    'unit', 
     'image',
 ];
 
