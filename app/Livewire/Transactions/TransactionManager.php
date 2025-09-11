@@ -16,7 +16,7 @@ use Livewire\Attributes\Rule;
 class TransactionManager extends Component
 {
     public $transactions;
-    public $products;
+    public $products = [];
     public $showCreateForm = false;
     public $showDetailModal = false;
     public $selectedTransaction = null;
@@ -25,24 +25,23 @@ class TransactionManager extends Component
     public $start_date = '';
     public $end_date = '';
     
-    // Form properties
-    #[Rule('required|string|max:255')]
-    public $cashier_name = '';
-    
-    #[Rule('required|string')]
-    public $payment_method = 'cash';
-    
-    #[Rule('required|integer|min:0')]
-    public $paid_amount = 0;
-    
+    // Product search properties
+    public $search = '';
+    public $selectedCategory = '';
+    public $categories = [];
     public $cart = [];
+    public $quantities = [];
     public $total = 0;
+    public $paid_amount = 0;
     public $change = 0;
+    public $cashier_name = '';
+    public $payment_method = 'cash';
 
     public function mount()
     {
         $this->loadData();
         $this->cashier_name = auth()->user()->name;
+        $this->categories = \App\Models\Category::all();
     }
 
     public function loadData()
@@ -57,7 +56,42 @@ class TransactionManager extends Component
         }
         
         $this->transactions = $query->latest()->get();
-        $this->products = Product::where('stock', '>', 0)->get();
+        $this->loadProducts();
+    }
+
+    public function loadProducts()
+    {
+        $query = Product::where('stock', '>', 0);
+        
+        if ($this->search) {
+            $query->where(function($q) {
+                $q->where('name', 'like', '%' . $this->search . '%')
+                  ->orWhere('sku', 'like', '%' . $this->search . '%');
+            });
+        }
+        
+        if ($this->selectedCategory) {
+            $query->where('category_id', $this->selectedCategory);
+        }
+        
+        $this->products = $query->orderBy('name')->get();
+    }
+
+    public function updatedSearch()
+    {
+        $this->loadProducts();
+    }
+
+    public function updatedSelectedCategory()
+    {
+        $this->loadProducts();
+    }
+
+    public function clearSearch()
+    {
+        $this->search = '';
+        $this->selectedCategory = '';
+        $this->loadProducts();
     }
 
     public function applyFilter()
@@ -86,27 +120,46 @@ class TransactionManager extends Component
             return;
         }
 
+        // Get quantity from input or default to 1
+        $quantity = $this->quantities[$productId] ?? 1;
+        
+        if ($quantity <= 0) {
+            session()->flash('error', 'Jumlah harus lebih dari 0.');
+            return;
+        }
+
         $existingIndex = collect($this->cart)->search(function ($item) use ($productId) {
             return $item['product_id'] == $productId;
         });
 
         if ($existingIndex !== false) {
-            if ($this->cart[$existingIndex]['quantity'] < $product->stock) {
-                $this->cart[$existingIndex]['quantity']++;
+            $newQuantity = $this->cart[$existingIndex]['quantity'] + $quantity;
+            if ($newQuantity <= $product->stock) {
+                $this->cart[$existingIndex]['quantity'] = $newQuantity;
+                session()->flash('success', 'Produk berhasil ditambahkan ke keranjang.');
             } else {
-                session()->flash('error', 'Stok tidak mencukupi.');
+                session()->flash('error', 'Stok tidak mencukupi. Stok tersedia: ' . $product->stock);
                 return;
             }
         } else {
-            $this->cart[] = [
-                'product_id' => $product->id,
-                'name' => $product->name,
-                'price' => $product->selling_price,
-                'quantity' => 1,
-                'stock' => $product->stock
-            ];
+            if ($quantity <= $product->stock) {
+                $this->cart[] = [
+                    'product_id' => $product->id,
+                    'name' => $product->name,
+                    'price' => $product->selling_price,
+                    'quantity' => $quantity,
+                    'stock' => $product->stock,
+                    'image' => $product->image,
+                ];
+                session()->flash('success', 'Produk berhasil ditambahkan ke keranjang.');
+            } else {
+                session()->flash('error', 'Stok tidak mencukupi. Stok tersedia: ' . $product->stock);
+                return;
+            }
         }
 
+        // Reset quantity input after adding
+        $this->quantities[$productId] = 1;
         $this->calculateTotal();
     }
 
@@ -132,10 +185,17 @@ class TransactionManager extends Component
     private function calculateTotal()
     {
         $this->total = collect($this->cart)->sum(function ($item) {
-            return $item['price'] * $item['quantity'];
+            return floatval($item['price']) * intval($item['quantity']);
         });
         
-        $this->change = max(0, $this->paid_amount - $this->total);
+        $this->change = max(0, floatval($this->paid_amount) - floatval($this->total));
+    }
+
+    public function getCartTotal()
+    {
+        return collect($this->cart)->sum(function ($item) {
+            return floatval($item['price']) * intval($item['quantity']);
+        });
     }
 
     public function updatedPaidAmount()
@@ -145,14 +205,25 @@ class TransactionManager extends Component
 
     public function save()
     {
-        $this->validate([
-            'cashier_name' => 'required|string|max:255',
-            'payment_method' => 'required|string',
-            'paid_amount' => 'required|integer|min:' . $this->total,
-        ]);
-
-        if (empty($this->cart)) {
-            session()->flash('error', 'Keranjang belanja kosong.');
+        try {
+            // Ensure all values are properly typed
+            $this->paid_amount = floatval($this->paid_amount);
+            
+            // Calculate total first
+            $this->calculateTotal();
+            
+            if (empty($this->cart)) {
+                session()->flash('error', 'Keranjang belanja kosong.');
+                return;
+            }
+            
+            $this->validate([
+                'cashier_name' => 'required|string|max:255',
+                'payment_method' => 'required|string',
+                'paid_amount' => 'required|numeric|min:' . floatval($this->total),
+            ]);
+        } catch (\Exception $e) {
+            session()->flash('error', 'Validation error: ' . $e->getMessage());
             return;
         }
 
@@ -163,9 +234,9 @@ class TransactionManager extends Component
                 'no_invoice' => 'INV-' . strtoupper(uniqid()),
                 'cashier_name' => $this->cashier_name,
                 'transaction_date' => Carbon::now(),
-                'total_price' => $this->total,
-                'paid_amount' => $this->paid_amount,
-                'change_amount' => $this->change,
+                'total_price' => floatval($this->total),
+                'paid_amount' => floatval($this->paid_amount),
+                'change_amount' => floatval($this->change),
                 'payment_method' => $this->payment_method,
             ]);
 
@@ -175,19 +246,19 @@ class TransactionManager extends Component
                 TransactionDetail::create([
                     'transaction_id' => $transaction->id,
                     'product_id' => $product->id,
-                    'quantity' => $item['quantity'],
-                    'unit_price' => $product->selling_price,
-                    'subtotal' => $product->selling_price * $item['quantity'],
+                    'quantity' => intval($item['quantity']),
+                    'unit_price' => floatval($product->selling_price),
+                    'subtotal' => floatval($product->selling_price) * intval($item['quantity']),
                 ]);
 
                 // Reduce stock
-                $product->decrement('stock', $item['quantity']);
+                $product->decrement('stock', intval($item['quantity']));
 
                 // Log inventory
                 InventoryLog::create([
                     'product_id' => $product->id,
                     'type' => 'out',
-                    'quantity' => $item['quantity'],
+                    'quantity' => intval($item['quantity']),
                     'description' => 'Penjualan #' . $transaction->no_invoice,
                     'logged_at' => now(),
                 ]);

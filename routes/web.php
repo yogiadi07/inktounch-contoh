@@ -7,10 +7,15 @@ use App\Livewire\Categories\CategoryManager;
 use App\Livewire\Transactions\TransactionManager;
 use App\Livewire\Reports\ReportManager;
 use App\Livewire\InventoryLogs\InventoryLogManager;
+use App\Livewire\Auth\Register;
+use App\Livewire\Admin\UserManager;
+use App\Livewire\Auth\ForgotPassword;
 
 Route::get('/', App\Livewire\Welcome::class)->name('welcome');
 
 Route::get('/login', Login::class)->name('login')->middleware('guest');
+Route::get('/register', Register::class)->name('register')->middleware('guest');
+Route::get('/forgot-password', ForgotPassword::class)->name('password.request')->middleware('guest');
 
 Route::middleware(['auth'])->group(function () {
     // Admin Dashboard
@@ -27,6 +32,7 @@ Route::middleware(['auth'])->group(function () {
     Route::middleware(['role:admin'])->group(function () {
         Route::get('/admin/reports', ReportManager::class)->name('admin.reports');
         Route::get('/admin/inventory-logs', InventoryLogManager::class)->name('admin.inventory-logs');
+        Route::get('/admin/users', UserManager::class)->name('admin.users');
     });
 
     // Shared routes (admin and staff)

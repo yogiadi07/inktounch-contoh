@@ -2,12 +2,12 @@
 
 @section('content')
 <div class="max-w-7xl mx-auto">
-    <div class="bg-white overflow-hidden shadow-2xl rounded-2xl border-4 border-yellow-400">
+    <div class="bg-white overflow-hidden shadow-2xl rounded-2xl">
         <div class="p-8">
             <div class="mb-8 text-center">
-                <h2 class="text-4xl font-bold text-black">👑 Admin Dashboard</h2>
+                <h2 class="text-4xl font-bold text-black">👑 Dasbor Admin</h2>
                 <div class="w-24 h-2 bg-yellow-400 mx-auto mt-3 mb-4 rounded-full"></div>
-                <p class="text-lg text-gray-700 font-medium">Welcome, {{ auth()->user()->name }}! You have full access to the system.</p>
+                <p class="text-lg text-gray-700 font-medium">Selamat datang, {{ auth()->user()->name }}! Anda memiliki akses penuh ke sistem.</p>
             </div>
 
             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
@@ -17,7 +17,7 @@
                             <span class="text-black text-xl font-bold">📦</span>
                         </div>
                         <div class="ml-4">
-                            <dt class="text-sm font-bold text-black">Total Products</dt>
+                            <dt class="text-sm font-bold text-black">Total Produk</dt>
                             <dd class="text-2xl font-bold text-black">{{ \App\Models\Product::count() }}</dd>
                         </div>
                     </div>
@@ -29,7 +29,7 @@
                             <span class="text-black text-xl font-bold">🏷️</span>
                         </div>
                         <div class="ml-4">
-                            <dt class="text-sm font-bold text-black">Total Categories</dt>
+                            <dt class="text-sm font-bold text-black">Total Kategori</dt>
                             <dd class="text-2xl font-bold text-black">{{ \App\Models\Category::count() }}</dd>
                         </div>
                     </div>
@@ -41,7 +41,7 @@
                             <span class="text-black text-xl font-bold">💰</span>
                         </div>
                         <div class="ml-4">
-                            <dt class="text-sm font-bold text-black">Total Transactions</dt>
+                            <dt class="text-sm font-bold text-black">Total Transaksi</dt>
                             <dd class="text-2xl font-bold text-black">0</dd>
                         </div>
                     </div>
@@ -67,7 +67,7 @@
                             <span class="text-black text-xl font-bold">📦</span>
                         </div>
                         <div>
-                            <h3 class="text-lg font-bold text-black">Manage Products</h3>
+                            <h3 class="text-lg font-bold text-black">Kelola Produk</h3>
                             <p class="text-sm text-gray-700">Add, edit, and manage products</p>
                         </div>
                     </div>
@@ -79,7 +79,7 @@
                             <span class="text-black text-xl font-bold">🏷️</span>
                         </div>
                         <div>
-                            <h3 class="text-lg font-bold text-black">Manage Categories</h3>
+                            <h3 class="text-lg font-bold text-black">Kelola Kategori</h3>
                             <p class="text-sm text-gray-700">Add, edit, and manage product categories</p>
                         </div>
                     </div>
@@ -91,7 +91,7 @@
                             <span class="text-black text-xl font-bold">💰</span>
                         </div>
                         <div>
-                            <h3 class="text-lg font-bold text-black">Create Transaction</h3>
+                            <h3 class="text-lg font-bold text-black">Buat Transaksi</h3>
                             <p class="text-sm text-gray-700">Create new sales transaction</p>
                         </div>
                     </div>

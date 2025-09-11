@@ -5,12 +5,11 @@
         </div>
     @endif
 
-    <div class="bg-white overflow-hidden shadow-2xl rounded-2xl border-4 border-yellow-400">
+    <div class="bg-white overflow-hidden shadow-2xl rounded-2xl">
         <div class="p-8">
             <div class="flex justify-between items-center mb-8">
                 <div>
                     <h2 class="text-4xl font-bold text-black">🏷️ Category Management</h2>
-                    <div class="w-24 h-2 bg-yellow-400 mt-2 rounded-full"></div>
                 </div>
                 <button 
                     wire:click="openCreateForm" 
@@ -29,7 +28,7 @@
 
                     <form wire:submit="save" class="space-y-6">
                         <div>
-                            <label class="block text-sm font-bold text-black mb-2">📝 Category Name</label>
+                            <label class="block text-sm font-bold text-black mb-2">📝 Nama Kategori</label>
                             <input wire:model="name" type="text" class="block w-full border-2 border-gray-300 rounded-xl px-4 py-3 focus:border-yellow-400 focus:ring-4 focus:ring-yellow-200 font-medium">
                             @error('name') <span class="text-red-500 text-xs mt-1 block">{{ $message }}</span> @enderror
                         </div>
@@ -47,14 +46,14 @@
             @endif
 
             <!-- Categories Table -->
-            <div class="overflow-x-auto bg-white rounded-2xl border-2 border-yellow-400 shadow-lg">
+            <div class="overflow-x-auto bg-white rounded-2xl shadow-lg">
                 <table class="min-w-full">
                     <thead class="bg-yellow-400">
                         <tr>
                             <th class="px-6 py-4 text-left font-bold text-black">🔢 ID</th>
-                            <th class="px-6 py-4 text-left font-bold text-black">📝 Category Name</th>
-                            <th class="px-6 py-4 text-left font-bold text-black">📦 Product Count</th>
-                            <th class="px-6 py-4 text-left font-bold text-black">⚡ Actions</th>
+                            <th class="px-6 py-4 text-left font-bold text-black">📝 Nama Kategori</th>
+                            <th class="px-6 py-4 text-left font-bold text-black">📦 Jumlah Produk</th>
+                            <th class="px-6 py-4 text-left font-bold text-black">⚡ Aksi</th>
                         </tr>
                     </thead>
                     <tbody class="bg-white">
