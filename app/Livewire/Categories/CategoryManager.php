@@ -24,7 +24,7 @@ class CategoryManager extends Component
 
     public function loadData()
     {
-        $this->categories = Category::all();
+        $this->categories = Category::withCount('products')->get();
     }
 
     public function openCreateForm()

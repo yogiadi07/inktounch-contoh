@@ -3,23 +3,29 @@
 namespace App\Exports;
 
 use App\Models\Transaction;
+use Carbon\Carbon;
 use Maatwebsite\Excel\Concerns\FromCollection;
 use Maatwebsite\Excel\Concerns\WithHeadings;
-use Illuminate\Contracts\Support\Responsable;
 use Maatwebsite\Excel\Concerns\WithMapping;
+use Maatwebsite\Excel\Concerns\WithStyles;
+use PhpOffice\PhpSpreadsheet\Worksheet\Worksheet;
 
-class TransactionReportExport implements FromCollection, WithHeadings, WithMapping
+class TransactionReportExport implements FromCollection, WithHeadings, WithMapping, WithStyles
 {
-    protected $transactions;
+    protected $startDate;
+    protected $endDate;
 
-    public function __construct($transactions)
+    public function __construct($startDate, $endDate)
     {
-        $this->transactions = $transactions;
+        $this->startDate = $startDate;
+        $this->endDate = $endDate;
     }
 
     public function collection()
     {
-        return $this->transactions;
+        return Transaction::whereBetween('transaction_date', [$this->startDate, $this->endDate])
+            ->orderBy('transaction_date', 'desc')
+            ->get();
     }
 
     public function headings(): array
@@ -37,12 +43,20 @@ class TransactionReportExport implements FromCollection, WithHeadings, WithMappi
     public function map($row): array
     {
         return [
-            \Carbon\Carbon::parse($row->transaction_date)->format('d-m-Y H:i'),
+            Carbon::parse($row->transaction_date)->format('d-m-Y H:i'),
             $row->no_invoice,
-            $row->total_price,
-            $row->paid_amount,
-            $row->change_amount,
+            'Rp ' . number_format($row->total_price, 0, ',', '.'),
+            'Rp ' . number_format($row->paid_amount, 0, ',', '.'),
+            'Rp ' . number_format($row->change_amount, 0, ',', '.'),
             $row->payment_method,
+        ];
+    }
+
+    public function styles(Worksheet $sheet)
+    {
+        return [
+            // Style the first row as bold
+            1 => ['font' => ['bold' => true]],
         ];
     }
 }
